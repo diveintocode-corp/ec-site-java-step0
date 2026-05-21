@@ -1,0 +1,118 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+  <head th:replace="~{layout-admin :: head('注文詳細')}"></head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div th:replace="~{layout-admin :: sidebar}"></div>
+        <div class="col-md-10 p-4">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a th:href="@{/admin/orders}">注文管理</a></li>
+              <li class="breadcrumb-item active" th:text="${order.orderNo}"></li>
+            </ol>
+          </nav>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>注文詳細: <span th:text="${order.orderNo}"></span></h2>
+            <a th:href="@{/admin/orders/{id}/edit(id=${order.orderId})}" class="btn btn-primary">編集</a>
+          </div>
+
+          <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card mb-3">
+                <div class="card-header">配送先情報</div>
+                <div class="card-body">
+                  <table class="table table-sm mb-0">
+                    <tr>
+                      <th>氏名</th>
+                      <td th:text="${order.shipName}"></td>
+                    </tr>
+                    <tr>
+                      <th>郵便番号</th>
+                      <td th:text="${order.shipPostalCode}"></td>
+                    </tr>
+                    <tr>
+                      <th>都道府県</th>
+                      <td th:text="${order.shipPrefecture}"></td>
+                    </tr>
+                    <tr>
+                      <th>住所</th>
+                      <td th:text="${order.shipAddress1 + (order.shipAddress2 != null ? order.shipAddress2 : '')}"></td>
+                    </tr>
+                    <tr>
+                      <th>電話番号</th>
+                      <td th:text="${order.shipTelno}"></td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card mb-3">
+                <div class="card-header">注文情報</div>
+                <div class="card-body">
+                  <table class="table table-sm mb-0">
+                    <tr>
+                      <th>注文日時</th>
+                      <td th:text="${#temporals.format(order.createdAt, 'yyyy/MM/dd HH:mm')}"></td>
+                    </tr>
+                    <tr>
+                      <th>ステータス</th>
+                      <td>
+                        <span
+                          class="badge"
+                          th:classappend="${order.status == 'pending'} ? 'bg-warning text-dark' :
+                                         (${order.status == 'shipped'} ? 'bg-success' : 'bg-secondary')"
+                          th:text="${order.statusDisplay}"
+                        ></span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>小計（税抜）</th>
+                      <td>¥<span th:text="${#numbers.formatInteger(order.subtotalPrice, 1, 'COMMA')}"></span></td>
+                    </tr>
+                    <tr>
+                      <th>消費税</th>
+                      <td>¥<span th:text="${#numbers.formatInteger(order.tax, 1, 'COMMA')}"></span></td>
+                    </tr>
+                    <tr>
+                      <th>合計（税込）</th>
+                      <td class="fw-bold">
+                        ¥<span th:text="${#numbers.formatInteger(order.totalPrice, 1, 'COMMA')}"></span>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">注文アイテム</div>
+            <div class="card-body p-0">
+              <table class="table mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>商品名</th>
+                    <th>単価（税抜）</th>
+                    <th>数量</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="item : ${orderItems}">
+                    <td th:text="${item.productName}"></td>
+                    <td>¥<span th:text="${#numbers.formatInteger(item.unitPrice, 1, 'COMMA')}"></span></td>
+                    <td th:text="${item.quantity}"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div th:replace="~{layout-admin :: scripts}"></div>
+  </body>
+</html>

@@ -1,0 +1,111 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+  <head th:replace="~{layout-admin :: head('注文編集')}"></head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div th:replace="~{layout-admin :: sidebar}"></div>
+        <div class="col-md-10 p-4">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a th:href="@{/admin/orders}">注文管理</a></li>
+              <li class="breadcrumb-item">
+                <a th:href="@{/admin/orders/{id}(id=${order.orderId})}" th:text="${order.orderNo}"></a>
+              </li>
+              <li class="breadcrumb-item active">編集</li>
+            </ol>
+          </nav>
+          <h2 class="mb-4">注文編集: <span th:text="${order.orderNo}"></span></h2>
+
+          <form method="post" th:action="@{/admin/orders/{id}/edit(id=${order.orderId})}" th:object="${orderEditForm}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="shipName" class="form-label">お届け先氏名</label>
+                  <input
+                    type="text"
+                    id="shipName"
+                    name="shipName"
+                    class="form-control"
+                    th:field="*{shipName}"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="shipPostalCode" class="form-label">郵便番号</label>
+                  <input
+                    type="text"
+                    id="shipPostalCode"
+                    name="shipPostalCode"
+                    class="form-control"
+                    th:field="*{shipPostalCode}"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="shipPrefecture" class="form-label">都道府県</label>
+                  <input
+                    type="text"
+                    id="shipPrefecture"
+                    name="shipPrefecture"
+                    class="form-control"
+                    th:field="*{shipPrefecture}"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="shipAddress1" class="form-label">市区町村・番地</label>
+                  <input
+                    type="text"
+                    id="shipAddress1"
+                    name="shipAddress1"
+                    class="form-control"
+                    th:field="*{shipAddress1}"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="shipAddress2" class="form-label">建物名・部屋番号（任意）</label>
+                  <input
+                    type="text"
+                    id="shipAddress2"
+                    name="shipAddress2"
+                    class="form-control"
+                    th:field="*{shipAddress2}"
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="shipTelno" class="form-label">電話番号</label>
+                  <input
+                    type="text"
+                    id="shipTelno"
+                    name="shipTelno"
+                    class="form-control"
+                    th:field="*{shipTelno}"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="status" class="form-label">ステータス</label>
+                  <select id="status" name="status" class="form-select" th:field="*{status}">
+                    <option value="pending">未出荷</option>
+                    <option value="shipped">出荷済</option>
+                    <option value="canceled">キャンセル</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary">更新する</button>
+              <a th:href="@{/admin/orders/{id}(id=${order.orderId})}" class="btn btn-outline-secondary">キャンセル</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div th:replace="~{layout-admin :: scripts}"></div>
+  </body>
+</html>

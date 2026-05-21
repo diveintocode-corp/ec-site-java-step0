@@ -1,0 +1,58 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+  <head th:replace="~{layout :: head('商品一覧')}"></head>
+  <body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    <div class="container">
+      <h2 class="mb-4">商品一覧</h2>
+
+      <div th:if="${#lists.isEmpty(products)}" class="alert alert-info">現在取り扱い商品はありません。</div>
+
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+        <div class="col" th:each="product : ${products}">
+          <div class="card h-100 shadow-sm">
+            <a th:href="@{/products/{id}(id=${product.productId})}">
+              <img
+                th:if="${product.imageUrl != null}"
+                th:src="${product.imageUrl}"
+                class="card-img-top"
+                style="height: 200px; object-fit: cover"
+                th:alt="${product.name}"
+              />
+              <div
+                th:unless="${product.imageUrl != null}"
+                class="card-img-top d-flex align-items-center justify-content-center bg-light"
+                style="height: 200px"
+              >
+                <i class="bi bi-image text-muted fs-1"></i>
+              </div>
+            </a>
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title">
+                <a
+                  th:href="@{/products/{id}(id=${product.productId})}"
+                  th:text="${product.name}"
+                  class="text-decoration-none text-dark"
+                ></a>
+              </h5>
+              <p class="card-text text-muted small flex-grow-1" th:text="${product.description}"></p>
+              <div class="mt-2">
+                <span class="text-muted small"
+                  >税抜: ¥<span th:text="${#numbers.formatInteger(product.priceEx, 1, 'COMMA')}"></span></span
+                ><br />
+                <span class="fw-bold text-danger"
+                  >税込: ¥<span th:text="${#numbers.formatInteger(product.priceIn, 1, 'COMMA')}"></span
+                ></span>
+              </div>
+              <a th:href="@{/products/{id}(id=${product.productId})}" class="btn btn-outline-primary btn-sm mt-2"
+                >詳細を見る</a
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-5"></div>
+    <div th:replace="~{layout :: scripts}"></div>
+  </body>
+</html>

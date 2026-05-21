@@ -1,0 +1,92 @@
+CREATE TABLE IF NOT EXISTS users (
+  user_id   BIGINT AUTO_INCREMENT PRIMARY KEY,
+  email     VARCHAR(255) UNIQUE NOT NULL,
+  password  VARCHAR(255) NOT NULL,
+  active BOOLEAN DEFAULT TRUE,
+  role      VARCHAR(20) DEFAULT 'ROLE_USER',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS products (
+  product_id  BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name        VARCHAR(128) NOT NULL,
+  description CLOB,
+  price       DECIMAL(10,2) DEFAULT 0.00,
+  deleted     BOOLEAN DEFAULT FALSE,
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS product_images (
+  product_image_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  product_id       BIGINT NOT NULL,
+  image_path       VARCHAR(500) NOT NULL,
+  created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS carts (
+  cart_id    BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id    BIGINT UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS cart_items (
+  cart_item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  cart_id      BIGINT NOT NULL,
+  product_id   BIGINT NOT NULL,
+  quantity     INT DEFAULT 1,
+  created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (cart_id)    REFERENCES carts(cart_id)       ON DELETE CASCADE,
+  FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+  order_id        BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id         BIGINT NOT NULL,
+  order_no        VARCHAR(12) UNIQUE NOT NULL,
+  ship_name       VARCHAR(64)  NOT NULL,
+  ship_postal_code VARCHAR(10) NOT NULL,
+  ship_prefecture VARCHAR(16)  NOT NULL,
+  ship_address1   VARCHAR(128) NOT NULL,
+  ship_address2   VARCHAR(128),
+  ship_telno      VARCHAR(11)  NOT NULL,
+  subtotal_price  INT DEFAULT 0,
+  tax             INT DEFAULT 0,
+  total_price     INT DEFAULT 0,
+  status          VARCHAR(16)  DEFAULT 'pending',
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+  order_item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  order_id      BIGINT NOT NULL,
+  product_id    BIGINT NOT NULL,
+  unit_price    INT DEFAULT 0,
+  quantity      INT DEFAULT 1,
+  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (order_id)   REFERENCES orders(order_id)     ON DELETE CASCADE,
+  FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS profiles (
+  profile_id  BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id     BIGINT UNIQUE NOT NULL,
+  name        VARCHAR(64)  NOT NULL,
+  postal_code VARCHAR(7)   NOT NULL,
+  prefecture  VARCHAR(16)  NOT NULL,
+  address_1   VARCHAR(128) NOT NULL,
+  address_2   VARCHAR(128),
+  telno       VARCHAR(11)  NOT NULL,
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);

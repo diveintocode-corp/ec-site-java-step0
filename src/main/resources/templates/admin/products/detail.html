@@ -1,0 +1,83 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+  <head th:replace="~{layout-admin :: head('商品詳細')}"></head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div th:replace="~{layout-admin :: sidebar}"></div>
+        <div class="col-md-10 p-4">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a th:href="@{/admin/products}">商品管理</a></li>
+              <li class="breadcrumb-item active" th:text="${product.name}"></li>
+            </ol>
+          </nav>
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 th:text="${product.name}"></h2>
+            <div>
+              <a th:href="@{/admin/products/{id}/edit(id=${product.productId})}" class="btn btn-primary me-1">編集</a>
+              <a th:href="@{/admin/products/{id}/delete(id=${product.productId})}" class="btn btn-outline-danger"
+                >削除</a
+              >
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div
+                th:if="${#lists.isEmpty(images)}"
+                class="bg-light rounded d-flex align-items-center justify-content-center"
+                style="height: 300px"
+              >
+                <i class="bi bi-image text-muted fs-1"></i>
+              </div>
+              <div th:unless="${#lists.isEmpty(images)}">
+                <div class="d-flex gap-2 flex-wrap">
+                  <img
+                    th:each="img : ${images}"
+                    th:src="${img.imagePath}"
+                    style="height: 150px; width: 150px; object-fit: cover"
+                    class="rounded border"
+                    th:alt="${product.name}"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <table class="table">
+                <tr>
+                  <th>商品ID</th>
+                  <td th:text="${product.productId}"></td>
+                </tr>
+                <tr>
+                  <th>商品名</th>
+                  <td th:text="${product.name}"></td>
+                </tr>
+                <tr>
+                  <th>説明</th>
+                  <td th:text="${product.description}"></td>
+                </tr>
+                <tr>
+                  <th>価格（税抜）</th>
+                  <td>¥<span th:text="${#numbers.formatInteger(product.price, 1, 'COMMA')}"></span></td>
+                </tr>
+                <tr>
+                  <th>状態</th>
+                  <td>
+                    <span
+                      class="badge"
+                      th:classappend="${product.deleted} ? 'bg-secondary' : 'bg-success'"
+                      th:text="${product.deleted} ? '停止中' : '販売中'"
+                    ></span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div th:replace="~{layout-admin :: scripts}"></div>
+  </body>
+</html>

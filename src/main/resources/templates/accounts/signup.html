@@ -1,0 +1,33 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+  <head th:replace="~{layout :: head('会員登録')}"></head>
+  <body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    <div class="container" style="max-width: 400px; margin: 2rem auto">
+      <h2 class="mb-4">会員登録</h2>
+
+      <form method="post" th:action="@{/accounts/signup}" th:object="${signupForm}">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <div class="mb-3">
+          <label for="email" class="form-label">メールアドレス <span class="text-danger">*</span></label>
+          <input type="email" id="email" name="email" class="form-control" th:field="*{email}" />
+          <div th:if="${emailError}" class="text-danger small mt-1" th:text="${emailError}"></div>
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">パスワード <span class="text-danger">*</span></label>
+          <input type="password" id="password" name="password" class="form-control" />
+          <div class="form-text">8文字以上で入力してください</div>
+          <div th:if="${passwordError}" class="text-danger small mt-1" th:text="${passwordError}"></div>
+        </div>
+        <div class="mb-3">
+          <label for="confirmPassword" class="form-label">パスワード（確認） <span class="text-danger">*</span></label>
+          <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" />
+          <div th:if="${confirmPasswordError}" class="text-danger small mt-1" th:text="${confirmPasswordError}"></div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">登録する</button>
+      </form>
+      <p class="mt-3 text-center">既にアカウントをお持ちの方は <a th:href="@{/accounts/login}">ログイン</a></p>
+    </div>
+    <div th:replace="~{layout :: scripts}"></div>
+  </body>
+</html>

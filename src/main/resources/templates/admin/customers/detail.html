@@ -1,0 +1,129 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+  <head th:replace="~{layout-admin :: head('顧客詳細')}"></head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div th:replace="~{layout-admin :: sidebar}"></div>
+        <div class="col-md-10 p-4">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a th:href="@{/admin/customers}">顧客管理</a></li>
+              <li class="breadcrumb-item active" th:text="${customer.email}"></li>
+            </ol>
+          </nav>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>顧客詳細</h2>
+            <a th:href="@{/admin/customers/{id}/edit(id=${customer.userId})}" class="btn btn-primary">編集</a>
+          </div>
+
+          <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+          <!-- アカウント情報 -->
+          <div class="card mb-4">
+            <div class="card-header">アカウント情報</div>
+            <div class="card-body">
+              <table class="table table-sm mb-0">
+                <tr>
+                  <th>ID</th>
+                  <td th:text="${customer.userId}"></td>
+                </tr>
+                <tr>
+                  <th>メールアドレス</th>
+                  <td th:text="${customer.email}"></td>
+                </tr>
+                <tr>
+                  <th>状態</th>
+                  <td>
+                    <span
+                      class="badge"
+                      th:classappend="${customer.active} ? 'bg-success' : 'bg-secondary'"
+                      th:text="${customer.active} ? '有効' : '無効'"
+                    ></span>
+                  </td>
+                </tr>
+                <tr>
+                  <th>登録日時</th>
+                  <td th:text="${#temporals.format(customer.createdAt, 'yyyy/MM/dd HH:mm')}"></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- プロフィール情報 -->
+          <div class="card mb-4" th:if="${profile != null}">
+            <div class="card-header">プロフィール情報</div>
+            <div class="card-body">
+              <table class="table table-sm mb-0">
+                <tr>
+                  <th>氏名</th>
+                  <td th:text="${profile.name}"></td>
+                </tr>
+                <tr>
+                  <th>郵便番号</th>
+                  <td th:text="${profile.postalCode}"></td>
+                </tr>
+                <tr>
+                  <th>住所</th>
+                  <td
+                    th:text="${profile.prefecture + profile.address1 + (profile.address2 != null ? profile.address2 : '')}"
+                  ></td>
+                </tr>
+                <tr>
+                  <th>電話番号</th>
+                  <td th:text="${profile.telno}"></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+          <div th:unless="${profile != null}" class="alert alert-info mb-4">プロフィール情報がありません。</div>
+
+          <!-- 注文履歴 -->
+          <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between">
+              <span>注文履歴</span>
+              <span class="fw-bold"
+                >出荷済み合計: ¥<span th:text="${#numbers.formatInteger(totalShipped, 1, 'COMMA')}"></span
+              ></span>
+            </div>
+            <div class="card-body p-0" th:if="${not #lists.isEmpty(orders)}">
+              <table class="table mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>注文番号</th>
+                    <th>注文日時</th>
+                    <th>合計（税込）</th>
+                    <th>ステータス</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="order : ${orders}">
+                    <td>
+                      <a
+                        th:href="@{/admin/orders/{id}(id=${order.orderId})}"
+                        th:text="${order.orderNo}"
+                        class="text-decoration-none"
+                      ></a>
+                    </td>
+                    <td th:text="${#temporals.format(order.createdAt, 'yyyy/MM/dd HH:mm')}"></td>
+                    <td>¥<span th:text="${#numbers.formatInteger(order.totalPrice, 1, 'COMMA')}"></span></td>
+                    <td>
+                      <span
+                        class="badge"
+                        th:classappend="${order.status == 'pending'} ? 'bg-warning text-dark' :
+                                       (${order.status == 'shipped'} ? 'bg-success' : 'bg-secondary')"
+                        th:text="${order.statusDisplay}"
+                      ></span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card-body" th:if="${#lists.isEmpty(orders)}">注文履歴はありません。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div th:replace="~{layout-admin :: scripts}"></div>
+  </body>
+</html>

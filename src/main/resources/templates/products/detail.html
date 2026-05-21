@@ -1,0 +1,101 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+  <head th:replace="~{layout :: head('商品詳細')}"></head>
+  <body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    <div class="container">
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a th:href="@{/products}">商品一覧</a></li>
+          <li class="breadcrumb-item active" th:text="${product.name}"></li>
+        </ol>
+      </nav>
+
+      <div id="cartMessage" class="alert d-none mb-3"></div>
+
+      <div class="row">
+        <!-- 画像エリア -->
+        <div class="col-md-6">
+          <div
+            th:if="${#lists.isEmpty(product.images)}"
+            class="d-flex align-items-center justify-content-center bg-light rounded"
+            style="height: 400px"
+          >
+            <i class="bi bi-image text-muted fs-1"></i>
+          </div>
+          <div th:unless="${#lists.isEmpty(product.images)}">
+            <img
+              id="mainImage"
+              th:src="${product.images[0].imagePath}"
+              class="img-fluid rounded mb-2"
+              style="max-height: 400px; width: 100%; object-fit: contain"
+              th:alt="${product.name}"
+            />
+            <div class="d-flex gap-2 mt-2 flex-wrap">
+              <img
+                th:each="img : ${product.images}"
+                th:src="${img.imagePath}"
+                class="img-thumbnail"
+                style="height: 80px; width: 80px; object-fit: cover; cursor: pointer"
+                onclick="document.getElementById('mainImage').src = this.src"
+                th:alt="${product.name}"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- 商品情報 -->
+        <div class="col-md-6">
+          <h2 th:text="${product.name}" class="mb-3"></h2>
+          <p class="text-muted" th:text="${product.description}"></p>
+          <div class="mb-3">
+            <span class="text-muted"
+              >税抜価格: ¥<span th:text="${#numbers.formatInteger(product.priceEx, 1, 'COMMA')}"></span></span
+            ><br />
+            <span class="fs-4 fw-bold text-danger"
+              >税込: ¥<span th:text="${#numbers.formatInteger(product.priceIn, 1, 'COMMA')}"></span
+            ></span>
+          </div>
+          <button
+            id="addToCartBtn"
+            class="btn btn-primary btn-lg"
+            th:data-product-id="${product.productId}"
+            onclick="addToCart(this)"
+          >
+            <i class="bi bi-cart-plus"></i> カートに追加
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div th:replace="~{layout :: scripts}"></div>
+    <script th:inline="javascript">
+      function addToCart(btn) {
+        const productId = btn.getAttribute("data-product-id");
+        const csrfToken = document.querySelector('meta[name="_csrf"]')
+          ? document.querySelector('meta[name="_csrf"]').content
+          : null;
+        const params = new URLSearchParams({ productId: productId });
+
+        fetch("/cart/add", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRF-TOKEN": /*[[${_csrf.token}]]*/ "",
+          },
+          body: params,
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            const msg = document.getElementById("cartMessage");
+            msg.className = "alert " + (data.success ? "alert-success" : "alert-danger");
+            msg.textContent = data.message;
+            msg.classList.remove("d-none");
+            setTimeout(() => msg.classList.add("d-none"), 3000);
+          });
+      }
+    </script>
+    <!-- CSRF for JS -->
+    <meta th:name="_csrf" th:content="${_csrf.token}" />
+  </body>
+</html>

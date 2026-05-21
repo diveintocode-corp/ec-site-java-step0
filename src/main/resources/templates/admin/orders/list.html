@@ -1,0 +1,58 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+  <head th:replace="~{layout-admin :: head('注文管理')}"></head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div th:replace="~{layout-admin :: sidebar}"></div>
+        <div class="col-md-10 p-4">
+          <h2 class="mb-4">注文管理</h2>
+
+          <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+              <thead class="table-dark">
+                <tr>
+                  <th>注文番号</th>
+                  <th>注文日時</th>
+                  <th>お届け先</th>
+                  <th>合計（税込）</th>
+                  <th>ステータス</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="order : ${orders}">
+                  <td>
+                    <a
+                      th:href="@{/admin/orders/{id}(id=${order.orderId})}"
+                      th:text="${order.orderNo}"
+                      class="text-decoration-none"
+                    ></a>
+                  </td>
+                  <td th:text="${#temporals.format(order.createdAt, 'yyyy/MM/dd HH:mm')}"></td>
+                  <td th:text="${order.shipName}"></td>
+                  <td>¥<span th:text="${#numbers.formatInteger(order.totalPrice, 1, 'COMMA')}"></span></td>
+                  <td>
+                    <span
+                      class="badge"
+                      th:classappend="${order.status == 'pending'} ? 'bg-warning text-dark' : (${order.status == 'shipped'} ? 'bg-success' : 'bg-secondary')"
+                      th:text="${order.statusDisplay}"
+                    ></span>
+                  </td>
+                  <td>
+                    <a th:href="@{/admin/orders/{id}/edit(id=${order.orderId})}" class="btn btn-sm btn-outline-primary"
+                      >編集</a
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div th:replace="~{layout-admin :: scripts}"></div>
+  </body>
+</html>

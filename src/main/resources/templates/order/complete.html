@@ -1,0 +1,79 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+  <head th:replace="~{layout :: head('注文完了')}"></head>
+  <body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    <div class="container" style="max-width: 700px">
+      <div class="text-center my-4">
+        <i class="bi bi-check-circle-fill text-success fs-1"></i>
+        <h2 class="mt-2">ご注文ありがとうございます</h2>
+        <p class="text-muted">注文番号: <strong th:text="${completeData.order.orderNo}"></strong></p>
+      </div>
+
+      <!-- 配送先 -->
+      <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">お届け先</h5></div>
+        <div class="card-body">
+          <p class="mb-1"><strong th:text="${completeData.order.shipName}"></strong></p>
+          <p class="mb-1">〒<span th:text="${completeData.order.shipPostalCode}"></span></p>
+          <p class="mb-1" th:text="${completeData.address}"></p>
+          <p class="mb-0">TEL: <span th:text="${completeData.order.shipTelno}"></span></p>
+        </div>
+      </div>
+
+      <!-- 注文内容 -->
+      <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">注文内容</h5></div>
+        <div class="card-body p-0">
+          <table class="table mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>商品名</th>
+                <th>数量</th>
+                <th>単価（税抜）</th>
+                <th>金額（税込）</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="item : ${completeData.orderItems}">
+                <td th:text="${item.productName}"></td>
+                <td th:text="${item.quantity}"></td>
+                <td>¥<span th:text="${#numbers.formatInteger(item.unitPrice, 1, 'COMMA')}"></span></td>
+                <td>¥<span th:text="${#numbers.formatInteger(item.priceIn, 1, 'COMMA')}"></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 金額 -->
+      <div class="card mb-4" style="max-width: 350px; margin-left: auto">
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-1">
+            <span>小計（税抜）</span>
+            <span
+              >¥<span th:text="${#numbers.formatInteger(completeData.order.subtotalPrice, 1, 'COMMA')}"></span
+            ></span>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <span>消費税（<span th:text="${completeData.taxRate}"></span>%）</span>
+            <span>¥<span th:text="${#numbers.formatInteger(completeData.order.tax, 1, 'COMMA')}"></span></span>
+          </div>
+          <hr />
+          <div class="d-flex justify-content-between fw-bold fs-5">
+            <span>合計（税込）</span>
+            <span class="text-danger"
+              >¥<span th:text="${#numbers.formatInteger(completeData.order.totalPrice, 1, 'COMMA')}"></span
+            ></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <a th:href="@{/order-history}" class="btn btn-outline-primary me-2">注文履歴を確認する</a>
+        <a th:href="@{/products}" class="btn btn-primary">ショッピングを続ける</a>
+      </div>
+    </div>
+    <div th:replace="~{layout :: scripts}"></div>
+  </body>
+</html>
