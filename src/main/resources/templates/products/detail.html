@@ -17,13 +17,13 @@
         <!-- 画像エリア -->
         <div class="col-md-6">
           <div
-            th:if="${#lists.isEmpty(product.images)}"
+            th:if="${product.images == null or product.images.size() == 0}"
             class="d-flex align-items-center justify-content-center bg-light rounded"
             style="height: 400px"
           >
             <i class="bi bi-image text-muted fs-1"></i>
           </div>
-          <div th:unless="${#lists.isEmpty(product.images)}">
+          <div th:if="${product.images != null and product.images.size() > 0}">
             <img
               id="mainImage"
               th:src="${product.images[0].imagePath}"
