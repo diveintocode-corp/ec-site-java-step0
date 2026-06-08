@@ -1,5 +1,6 @@
 package com.example.ecsite.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.stereotype.Controller;
@@ -33,6 +34,11 @@ public class ProductController {
     @GetMapping
     public String productList(Model model) {
         List<ProductViewModel> products = productService.getActiveProductViewModels();
+        for (ProductViewModel p : products) {
+            String desc = p.getDescription() == null ? "" : p.getDescription().length() > 128 ? p.getDescription().substring(0, 128) : p.getDescription();
+            p.setDescription(desc);
+            p.setPriceIn(p.getPriceEx().multiply(BigDecimal.valueOf(1.0 + productService.getTaxRate())).intValue());
+        }
         model.addAttribute("products", products);
         return "products/list";
     }
@@ -44,6 +50,7 @@ public class ProductController {
     @GetMapping("/{productId}")
     public String productDetail(@PathVariable Long productId, Model model) {
         ProductDetailViewModel product = productService.getActiveProductDetailViewModel(productId);
+        product.setPriceIn(product.getPriceEx().multiply(BigDecimal.valueOf(1.0 + productService.getTaxRate())).intValue());
         model.addAttribute("product", product);
         return "products/detail";
     }
