@@ -2,6 +2,8 @@ package com.example.ecsite.controller;
 
 import java.util.Map;
 
+import com.example.ecsite.viewmodel.CartItemViewModel;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -36,6 +38,14 @@ public class CartController {
     @GetMapping
     public String cartList(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         CartViewModel cart = cartService.getCartViewModel(userDetails.getUserId());
+        int totalEx = 0;
+        int totalIn = 0;
+        for (CartItemViewModel item : cart.getItems()) {
+            totalEx += item.getPriceEx();
+            totalIn += item.getPriceIn();
+        }
+        cart.setTotalEx(totalEx);
+        cart.setTotalIn(totalIn);
         model.addAttribute("cart", cart);
         return "cart/list";
     }
