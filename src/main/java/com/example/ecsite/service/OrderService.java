@@ -59,30 +59,30 @@ public class OrderService {
      */
     public OrderConfirmViewModel getOrderConfirmViewModel(Long userId, Profile profile) {
         Cart cart = cartRepository.findByUserId(userId);
-        List<CartItem> cartItems = (cart != null)
+        List<CartItem> list = (cart != null)
                 ? cartItemRepository.findByCartId(cart.getCartId())
                 : List.of();
 
-        List<OrderItemViewModel> displayItems = new ArrayList<>();
+        List<OrderItemViewModel> data = new ArrayList<>();
         int subtotal = 0;
-        for (CartItem ci : cartItems) {
-            Product product = productRepository.findById(ci.getProductId());
-            if (product == null)
+        for (CartItem ci : list) {
+            Product p = productRepository.findById(ci.getProductId());
+            if (p == null)
                 continue;
-            List<ProductImage> images = productImageRepository.findByProductId(product.getProductId());
-            String imageUrl = images.isEmpty() ? null : images.get(0).getImagePath();
-            int priceEx = product.getPrice().multiply(BigDecimal.valueOf(ci.getQuantity())).intValue();
-            int priceIn = product.getPrice()
+            List<ProductImage> images = productImageRepository.findByProductId(p.getProductId());
+            String url = images.isEmpty() ? null : images.get(0).getImagePath();
+            int priceEx = p.getPrice().multiply(BigDecimal.valueOf(ci.getQuantity())).intValue();
+            int priceIn = p.getPrice()
                     .multiply(BigDecimal.valueOf(1.0 + taxRate))
                     .multiply(BigDecimal.valueOf(ci.getQuantity()))
                     .intValue();
             OrderItemViewModel vm = new OrderItemViewModel();
-            vm.setProductName(product.getName());
-            vm.setImageUrl(imageUrl);
+            vm.setProductName(p.getName());
+            vm.setImageUrl(url);
             vm.setQuantity(ci.getQuantity());
-            vm.setUnitPrice(product.getPrice().intValue());
+            vm.setUnitPrice(p.getPrice().intValue());
             vm.setPriceIn(priceIn);
-            displayItems.add(vm);
+            data.add(vm);
             subtotal += priceEx;
         }
 
@@ -93,7 +93,7 @@ public class OrderService {
         OrderConfirmViewModel vm = new OrderConfirmViewModel();
         vm.setProfile(profile);
         vm.setAddress(address);
-        vm.setOrderItems(displayItems);
+        vm.setOrderItems(data);
         vm.setSubtotal(subtotal);
         vm.setTax(tax);
         vm.setTotal(total);
@@ -107,104 +107,101 @@ public class OrderService {
     @Transactional
     public OrderCompleteViewModel completeOrder(Long userId, Profile profile) {
         Cart cart = cartRepository.findByUserId(userId);
-        List<CartItem> cartItems = (cart != null)
+        List<CartItem> list = (cart != null)
                 ? cartItemRepository.findByCartId(cart.getCartId())
                 : List.of();
-        if (cartItems.isEmpty())
-            return null;
-
-        // 小計・税・合計計算
-        int subtotal = 0;
-        for (CartItem ci : cartItems) {
-            Product product = productRepository.findById(ci.getProductId());
-            if (product != null) {
-                subtotal += product.getPrice().intValue() * ci.getQuantity();
+        if (!list.isEmpty()) {
+            int subtotal = 0;
+            for (CartItem ci : list) {
+                Product p = productRepository.findById(ci.getProductId());
+                if (p != null) {
+                    subtotal += p.getPrice().intValue() * ci.getQuantity();
+                }
             }
+            int tax = (int) (subtotal * taxRate);
+            int total = subtotal + tax;
+
+            String orderNo = UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+            Order order = new Order();
+            order.setUserId(userId);
+            order.setOrderNo(orderNo);
+            order.setShipName(profile.getName());
+            order.setShipPostalCode(profile.getPostalCode());
+            order.setShipPrefecture(profile.getPrefecture());
+            order.setShipAddress1(profile.getAddress1());
+            order.setShipAddress2(profile.getAddress2());
+            order.setShipTelno(profile.getTelno());
+            order.setSubtotalPrice(subtotal);
+            order.setTax(tax);
+            order.setTotalPrice(total);
+            order.setStatus("pending");
+            orderRepository.insert(order);
+
+            List<OrderItemViewModel> data = new ArrayList<>();
+            for (CartItem ci : list) {
+                Product p = productRepository.findById(ci.getProductId());
+                if (p == null)
+                    continue;
+                OrderItem oi = new OrderItem();
+                oi.setOrderId(order.getOrderId());
+                oi.setProductId(p.getProductId());
+                oi.setUnitPrice(p.getPrice().intValue());
+                oi.setQuantity(ci.getQuantity());
+                orderItemRepository.insert(oi);
+
+                int priceIn = (int) (oi.getUnitPrice() * (1 + taxRate));
+                OrderItemViewModel vm = new OrderItemViewModel();
+                vm.setProductName(p.getName());
+                vm.setQuantity(ci.getQuantity());
+                vm.setUnitPrice(oi.getUnitPrice());
+                vm.setPriceIn(priceIn);
+                data.add(vm);
+            }
+
+            cartItemRepository.deleteByCartId(cart.getCartId());
+
+            String address = buildFullAddress(profile.getPrefecture(), profile.getAddress1(), profile.getAddress2());
+            OrderCompleteViewModel vm = new OrderCompleteViewModel();
+            vm.setOrder(order);
+            vm.setAddress(address);
+            vm.setOrderItems(data);
+            vm.setTaxRate((int) (taxRate * 100));
+            return vm;
+        } else {
+            return null;
         }
-        int tax = (int) (subtotal * taxRate);
-        int total = subtotal + tax;
-
-        // 注文レコード作成
-        String orderNo = UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
-        Order order = new Order();
-        order.setUserId(userId);
-        order.setOrderNo(orderNo);
-        order.setShipName(profile.getName());
-        order.setShipPostalCode(profile.getPostalCode());
-        order.setShipPrefecture(profile.getPrefecture());
-        order.setShipAddress1(profile.getAddress1());
-        order.setShipAddress2(profile.getAddress2());
-        order.setShipTelno(profile.getTelno());
-        order.setSubtotalPrice(subtotal);
-        order.setTax(tax);
-        order.setTotalPrice(total);
-        order.setStatus("pending");
-        orderRepository.insert(order);
-
-        // 注文アイテム作成
-        List<OrderItemViewModel> displayItems = new ArrayList<>();
-        for (CartItem ci : cartItems) {
-            Product product = productRepository.findById(ci.getProductId());
-            if (product == null)
-                continue;
-            OrderItem oi = new OrderItem();
-            oi.setOrderId(order.getOrderId());
-            oi.setProductId(product.getProductId());
-            oi.setUnitPrice(product.getPrice().intValue());
-            oi.setQuantity(ci.getQuantity());
-            orderItemRepository.insert(oi);
-
-            int priceIn = (int) (oi.getUnitPrice() * (1 + taxRate));
-            OrderItemViewModel vm = new OrderItemViewModel();
-            vm.setProductName(product.getName());
-            vm.setQuantity(ci.getQuantity());
-            vm.setUnitPrice(oi.getUnitPrice());
-            vm.setPriceIn(priceIn);
-            displayItems.add(vm);
-        }
-
-        // カートをクリア
-        cartItemRepository.deleteByCartId(cart.getCartId());
-
-        String address = buildFullAddress(profile.getPrefecture(), profile.getAddress1(), profile.getAddress2());
-        OrderCompleteViewModel vm = new OrderCompleteViewModel();
-        vm.setOrder(order);
-        vm.setAddress(address);
-        vm.setOrderItems(displayItems);
-        vm.setTaxRate((int) (taxRate * 100));
-        return vm;
     }
 
     /**
      * ユーザーの注文履歴を取得する。
      */
     public List<OrderHistoryItemViewModel> getOrderHistory(Long userId) {
-        List<Order> orders = orderRepository.findByUserId(userId);
+        List<Order> list = orderRepository.findByUserId(userId);
         List<OrderHistoryItemViewModel> result = new ArrayList<>();
-        for (Order order : orders) {
-            List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getOrderId());
-            List<OrderItemViewModel> itemVms = new ArrayList<>();
-            for (OrderItem oi : orderItems) {
-                Product product = productRepository.findById(oi.getProductId());
-                List<ProductImage> images = product != null
-                        ? productImageRepository.findByProductId(product.getProductId())
+        for (Order order : list) {
+            List<OrderItem> data = orderItemRepository.findByOrderId(order.getOrderId());
+            List<OrderItemViewModel> vms = new ArrayList<>();
+            for (OrderItem oi : data) {
+                Product p = productRepository.findById(oi.getProductId());
+                List<ProductImage> images = p != null
+                        ? productImageRepository.findByProductId(p.getProductId())
                         : List.of();
-                String imageUrl = images.isEmpty() ? null : images.get(0).getImagePath();
+                String url = images.isEmpty() ? null : images.get(0).getImagePath();
                 int priceIn = (int) (oi.getUnitPrice() * (1 + taxRate));
                 OrderItemViewModel vm = new OrderItemViewModel();
-                vm.setProductName(product != null ? product.getName() : "（削除済み商品）");
-                vm.setImageUrl(imageUrl);
+                vm.setProductName(p != null ? p.getName() : "（削除済み商品）");
+                vm.setImageUrl(url);
                 vm.setUnitPrice(oi.getUnitPrice());
                 vm.setQuantity(oi.getQuantity());
                 vm.setPriceIn(priceIn);
-                itemVms.add(vm);
+                vms.add(vm);
             }
             OrderHistoryItemViewModel hvm = new OrderHistoryItemViewModel();
             hvm.setOrderId(order.getOrderId());
             hvm.setOrderNo(order.getOrderNo());
             hvm.setStatusDisplay(order.getStatusDisplay());
             hvm.setCreatedAt(order.getCreatedAt());
-            hvm.setItems(itemVms);
+            hvm.setItems(vms);
             hvm.setSubtotal(order.getSubtotalPrice());
             hvm.setTax(order.getTax());
             hvm.setTotal(order.getTotalPrice());
@@ -220,13 +217,21 @@ public class OrderService {
     @Transactional
     public boolean cancelOrder(Long orderId, Long userId) {
         Order order = orderRepository.findById(orderId);
-        if (order == null || !order.getUserId().equals(userId))
+        if (order != null) {
+            if (order.getUserId().equals(userId)) {
+                if ("pending".equals(order.getStatus())) {
+                    order.setStatus("canceled");
+                    orderRepository.update(order);
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        } else {
             return false;
-        if (!"pending".equals(order.getStatus()))
-            return false;
-        order.setStatus("canceled");
-        orderRepository.update(order);
-        return true;
+        }
     }
 
     /**
@@ -254,13 +259,13 @@ public class OrderService {
      * 注文アイテムを ViewModel のリストで取得する（管理者用）。
      */
     public List<OrderItemViewModel> findOrderItemViewModels(Long orderId) {
-        List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
+        List<OrderItem> list = orderItemRepository.findByOrderId(orderId);
         List<OrderItemViewModel> result = new ArrayList<>();
-        for (OrderItem oi : orderItems) {
-            Product product = productRepository.findById(oi.getProductId());
+        for (OrderItem oi : list) {
+            Product p = productRepository.findById(oi.getProductId());
             int priceIn = (int) (oi.getUnitPrice() * (1 + taxRate));
             OrderItemViewModel vm = new OrderItemViewModel();
-            vm.setProductName(product != null ? product.getName() : "（削除済み商品）");
+            vm.setProductName(p != null ? p.getName() : "（削除済み商品）");
             vm.setQuantity(oi.getQuantity());
             vm.setUnitPrice(oi.getUnitPrice());
             vm.setPriceIn(priceIn);

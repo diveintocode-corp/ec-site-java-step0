@@ -45,6 +45,9 @@ public class OrderController {
             return "redirect:/profile/edit";
         }
         OrderConfirmViewModel vm = orderService.getOrderConfirmViewModel(userDetails.getUserId(), profile);
+        String address = profile.getPrefecture() + profile.getAddress1() + (profile.getAddress2() != null ? profile.getAddress2() : "");
+        vm.setAddress(address);
+        vm.setTotal(vm.getSubtotal() + vm.getTax());
         model.addAttribute("confirmData", vm);
         return "order/confirm";
     }
@@ -57,17 +60,20 @@ public class OrderController {
     @PostMapping("/complete")
     public String orderComplete(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         Profile profile = profileService.findByUserId(userDetails.getUserId());
-        if (profile == null) {
+        if (profile != null) {
+            if (!cartService.getCartItems(userDetails.getUserId()).isEmpty()) {
+                OrderCompleteViewModel vm = orderService.completeOrder(userDetails.getUserId(), profile);
+                if (vm != null) {
+                    model.addAttribute("completeData", vm);
+                    return "order/complete";
+                } else {
+                    return "redirect:/cart";
+                }
+            } else {
+                return "redirect:/cart";
+            }
+        } else {
             return "redirect:/profile/edit";
         }
-        if (cartService.getCartItems(userDetails.getUserId()).isEmpty()) {
-            return "redirect:/cart";
-        }
-        OrderCompleteViewModel vm = orderService.completeOrder(userDetails.getUserId(), profile);
-        if (vm == null) {
-            return "redirect:/cart";
-        }
-        model.addAttribute("completeData", vm);
-        return "order/complete";
     }
 }
