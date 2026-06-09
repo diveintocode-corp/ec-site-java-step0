@@ -24,8 +24,6 @@ import com.example.ecsite.viewmodel.ProductViewModel;
 @Service
 public class ProductService {
 
-    private static final int DESCRIPTION_MAX_LENGTH = 128;
-
     @Value("${app.tax-rate:0.1}")
     private double taxRate;
 
@@ -56,17 +54,14 @@ public class ProductService {
         return products.stream().map(p -> {
             List<ProductImage> images = productImageRepository.findByProductId(p.getProductId());
             String imageUrl = images.isEmpty() ? null : images.get(0).getImagePath();
-            String desc = p.getDescription() == null ? ""
-                    : p.getDescription().length() > DESCRIPTION_MAX_LENGTH
-                            ? p.getDescription().substring(0, DESCRIPTION_MAX_LENGTH)
-                            : p.getDescription();
+            String desc = p.getDescription() == null ? "" : p.getDescription().length() > 128 ? p.getDescription().substring(0, 128) : p.getDescription();
             ProductViewModel vm = new ProductViewModel();
             vm.setProductId(p.getProductId());
             vm.setName(p.getName());
             vm.setDescription(desc);
             vm.setImageUrl(imageUrl);
             vm.setPriceEx(p.getPrice());
-            vm.setPriceIn(calcPriceIn(p.getPrice()));
+            vm.setPriceIn(p.getPrice().multiply(BigDecimal.valueOf(1.0 + taxRate)).intValue());
             return vm;
         }).toList();
     }
@@ -85,7 +80,7 @@ public class ProductService {
         vm.setDescription(product.getDescription());
         vm.setImages(images);
         vm.setPriceEx(product.getPrice());
-        vm.setPriceIn(calcPriceIn(product.getPrice()));
+        vm.setPriceIn(product.getPrice().multiply(BigDecimal.valueOf(1.0 + taxRate)).intValue());
         return vm;
     }
 
