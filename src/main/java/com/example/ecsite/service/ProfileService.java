@@ -31,25 +31,25 @@ public class ProfileService {
      */
     @Transactional
     public void saveProfile(Long userId, ProfileForm form) {
-        Profile existing = profileRepository.findByUserId(userId);
-        if (existing != null) {
-            existing.setName(form.getName());
-            existing.setPostalCode(form.getPostalCode());
-            existing.setPrefecture(form.getPrefecture());
-            existing.setAddress1(form.getAddress1());
-            existing.setAddress2(form.getAddress2());
-            existing.setTelno(form.getTelno());
-            profileRepository.update(existing);
+        Profile data = profileRepository.findByUserId(userId);
+        if (data != null) {
+            data.setName(form.getName());
+            data.setPostalCode(form.getPostalCode());
+            data.setPrefecture(form.getPrefecture());
+            data.setAddress1(form.getAddress1());
+            data.setAddress2(form.getAddress2());
+            data.setTelno(form.getTelno());
+            profileRepository.update(data);
         } else {
-            Profile profile = new Profile();
-            profile.setUserId(userId);
-            profile.setName(form.getName());
-            profile.setPostalCode(form.getPostalCode());
-            profile.setPrefecture(form.getPrefecture());
-            profile.setAddress1(form.getAddress1());
-            profile.setAddress2(form.getAddress2());
-            profile.setTelno(form.getTelno());
-            profileRepository.insert(profile);
+            Profile p = new Profile();
+            p.setUserId(userId);
+            p.setName(form.getName());
+            p.setPostalCode(form.getPostalCode());
+            p.setPrefecture(form.getPrefecture());
+            p.setAddress1(form.getAddress1());
+            p.setAddress2(form.getAddress2());
+            p.setTelno(form.getTelno());
+            profileRepository.insert(p);
         }
     }
 

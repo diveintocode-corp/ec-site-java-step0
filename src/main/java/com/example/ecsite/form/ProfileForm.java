@@ -1,8 +1,5 @@
 package com.example.ecsite.form;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
@@ -11,20 +8,54 @@ import lombok.Data;
  */
 @Data
 public class ProfileForm {
-    @NotBlank(message = "氏名を入力してください")
-    @Size(max = 64, message = "氏名は64文字以内で入力してください")
     private String name;
-    @NotBlank(message = "郵便番号は数字7桁で入力してください")
-    @Pattern(regexp = "\\d{7}", message = "郵便番号は数字7桁で入力してください")
     private String postalCode;
-    @NotBlank(message = "都道府県を選択してください。")
     private String prefecture;
-    @NotBlank(message = "市区町村・番地は128文字以内で入力してください")
-    @Size(max = 128, message = "市区町村・番地は128文字以内で入力してください")
     private String address1;
-    @Size(max = 128, message = "建物名・部屋番号は128文字以内で入力してください")
     private String address2;
-    @NotBlank(message = "電話番号は数字11桁以内で入力してください")
-    @Pattern(regexp = "\\d{1,11}", message = "電話番号は数字11桁以内で入力してください")
     private String telno;
+
+    public String validate() {
+        if (name != null && !name.isBlank()) {
+            if (name.length() <= 64) {
+                if (postalCode != null && !postalCode.isBlank()) {
+                    if (postalCode.matches("\\d{7}")) {
+                        if (prefecture != null && !prefecture.isBlank()) {
+                            if (address1 != null && !address1.isBlank()) {
+                                if (address1.length() <= 128) {
+                                    if (address2 == null || address2.length() <= 128) {
+                                        if (telno != null && !telno.isBlank()) {
+                                            if (telno.matches("\\d{1,11}")) {
+                                                return null;
+                                            } else {
+                                                return "電話番号は数字11桁以内で入力してください";
+                                            }
+                                        } else {
+                                            return "電話番号は数字11桁以内で入力してください";
+                                        }
+                                    } else {
+                                        return "建物名・部屋番号は128文字以内で入力してください";
+                                    }
+                                } else {
+                                    return "市区町村・番地は128文字以内で入力してください";
+                                }
+                            } else {
+                                return "市区町村・番地は128文字以内で入力してください";
+                            }
+                        } else {
+                            return "都道府県を選択してください。";
+                        }
+                    } else {
+                        return "郵便番号は数字7桁で入力してください";
+                    }
+                } else {
+                    return "郵便番号は数字7桁で入力してください";
+                }
+            } else {
+                return "氏名は64文字以内で入力してください";
+            }
+        } else {
+            return "氏名を入力してください";
+        }
+    }
 }

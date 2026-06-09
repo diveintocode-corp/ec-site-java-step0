@@ -1,11 +1,8 @@
 package com.example.ecsite.controller;
 
-import java.util.List;
-
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,8 +12,6 @@ import com.example.ecsite.entity.Profile;
 import com.example.ecsite.form.ProfileForm;
 import com.example.ecsite.security.CustomUserDetails;
 import com.example.ecsite.service.ProfileService;
-
-import jakarta.validation.Valid;
 
 /**
  * ユーザープロフィール編集コントローラ。
@@ -37,15 +32,15 @@ public class ProfileController {
      */
     @GetMapping("/edit")
     public String editProfile(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
-        Profile profile = profileService.findByUserId(userDetails.getUserId());
+        Profile data = profileService.findByUserId(userDetails.getUserId());
         ProfileForm form = new ProfileForm();
-        if (profile != null) {
-            form.setName(profile.getName());
-            form.setPostalCode(profile.getPostalCode());
-            form.setPrefecture(profile.getPrefecture());
-            form.setAddress1(profile.getAddress1());
-            form.setAddress2(profile.getAddress2());
-            form.setTelno(profile.getTelno());
+        if (data != null) {
+            form.setName(data.getName());
+            form.setPostalCode(data.getPostalCode());
+            form.setPrefecture(data.getPrefecture());
+            form.setAddress1(data.getAddress1());
+            form.setAddress2(data.getAddress2());
+            form.setTelno(data.getTelno());
         }
         model.addAttribute("profileForm", form);
         model.addAttribute("prefectures", PREFECTURE_LIST);
@@ -57,22 +52,16 @@ public class ProfileController {
      * 成功時は商品一覧画面にリダイレクトする。
      */
     @PostMapping("/edit")
-    public String saveProfile(@Valid @ModelAttribute ProfileForm form,
-            BindingResult bindingResult,
+    public String saveProfile(@ModelAttribute ProfileForm input,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model) {
-        if (bindingResult.hasErrors()) {
-            String error = List.of("name", "postalCode", "prefecture", "address1", "address2", "telno")
-                    .stream()
-                    .filter(bindingResult::hasFieldErrors)
-                    .map(f -> bindingResult.getFieldError(f).getDefaultMessage())
-                    .findFirst()
-                    .orElse(bindingResult.getAllErrors().get(0).getDefaultMessage());
-            model.addAttribute("errorMessage", error);
+        String msg = input.validate();
+        if (msg != null) {
+            model.addAttribute("errorMessage", msg);
             model.addAttribute("prefectures", PREFECTURE_LIST);
             return "profile/edit";
         }
-        profileService.saveProfile(userDetails.getUserId(), form);
+        profileService.saveProfile(userDetails.getUserId(), input);
         return "redirect:/products";
     }
 
