@@ -60,42 +60,36 @@ public class CartService {
      */
     public CartViewModel getCartViewModel(Long userId) {
         Cart cart = cartRepository.findByUserId(userId);
-        List<CartItemViewModel> items = new ArrayList<>();
+        List<CartItemViewModel> result = new ArrayList<>();
         int totalEx = 0;
         int totalIn = 0;
 
         if (cart != null) {
-            List<CartItem> cartItems = cartItemRepository.findByCartId(cart.getCartId());
-            for (CartItem ci : cartItems) {
-                Product product = productRepository.findById(ci.getProductId());
-                if (product == null)
+            List<CartItem> list = cartItemRepository.findByCartId(cart.getCartId());
+            for (CartItem ci : list) {
+                Product p = productRepository.findById(ci.getProductId());
+                if (p == null)
                     continue;
-                List<ProductImage> images = productImageRepository.findByProductId(product.getProductId());
-                String imageUrl = images.isEmpty() ? null : images.get(0).getImagePath();
-
-                int priceEx = product.getPrice().multiply(BigDecimal.valueOf(ci.getQuantity())).intValue();
-                int priceIn = product.getPrice()
-                        .multiply(BigDecimal.valueOf(1.0 + taxRate))
-                        .multiply(BigDecimal.valueOf(ci.getQuantity()))
-                        .intValue();
+                List<ProductImage> images = productImageRepository.findByProductId(p.getProductId());
+                String url = images.isEmpty() ? null : images.get(0).getImagePath();
 
                 CartItemViewModel vm = new CartItemViewModel();
                 vm.setCartItemId(ci.getCartItemId());
-                vm.setProductId(product.getProductId());
-                vm.setProductName(product.getName());
-                vm.setImageUrl(imageUrl);
+                vm.setProductId(p.getProductId());
+                vm.setProductName(p.getName());
+                vm.setImageUrl(url);
                 vm.setQuantity(ci.getQuantity());
-                vm.setPriceEx(priceEx);
-                vm.setPriceIn(priceIn);
-                items.add(vm);
+                vm.setPriceEx(p.getPrice().multiply(BigDecimal.valueOf(ci.getQuantity())).intValue());
+                vm.setPriceIn(p.getPrice().multiply(BigDecimal.valueOf(1.0 + taxRate)).multiply(BigDecimal.valueOf(ci.getQuantity())).intValue());
+                result.add(vm);
 
-                totalEx += priceEx;
-                totalIn += priceIn;
+                totalEx += p.getPrice().multiply(BigDecimal.valueOf(ci.getQuantity())).intValue();
+                totalIn += p.getPrice().multiply(BigDecimal.valueOf(1.0 + taxRate)).multiply(BigDecimal.valueOf(ci.getQuantity())).intValue();
             }
         }
 
         CartViewModel vm = new CartViewModel();
-        vm.setItems(items);
+        vm.setItems(result);
         vm.setTotalEx(totalEx);
         vm.setTotalIn(totalIn);
         vm.setTaxRate((int) (taxRate * 100));
@@ -111,17 +105,19 @@ public class CartService {
     public int addToCart(Long userId, Long productId) {
         Cart cart = getOrCreateCart(userId);
         CartItem existing = cartItemRepository.findByCartIdAndProductId(cart.getCartId(), productId);
-        if (existing != null) {
+        if (existing == null) {
+            if (cart.getCartId() != null) {
+                CartItem newItem = new CartItem();
+                newItem.setCartId(cart.getCartId());
+                newItem.setProductId(productId);
+                newItem.setQuantity(1);
+                cartItemRepository.insert(newItem);
+            }
+            return 1;
+        } else {
             existing.setQuantity(existing.getQuantity() + 1);
             cartItemRepository.update(existing);
             return existing.getQuantity();
-        } else {
-            CartItem newItem = new CartItem();
-            newItem.setCartId(cart.getCartId());
-            newItem.setProductId(productId);
-            newItem.setQuantity(1);
-            cartItemRepository.insert(newItem);
-            return 1;
         }
     }
 
@@ -133,13 +129,21 @@ public class CartService {
     @Transactional
     public boolean deleteCartItem(Long cartItemId, Long userId) {
         CartItem item = cartItemRepository.findById(cartItemId);
-        if (item == null)
-            return false;
         Cart cart = cartRepository.findByUserId(userId);
-        if (cart == null || !cart.getCartId().equals(item.getCartId()))
+        if (item != null) {
+            if (cart != null) {
+                if (cart.getCartId().equals(item.getCartId())) {
+                    cartItemRepository.deleteById(cartItemId);
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        } else {
             return false;
-        cartItemRepository.deleteById(cartItemId);
-        return true;
+        }
     }
 
     /**
