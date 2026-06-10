@@ -109,6 +109,29 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/
 | User Name | `sa`                           |
 | Password  | *(空欄)*                         |
 
+### 初期アカウント
+
+アプリケーション起動時に以下のアカウントが自動作成されます。
+
+| ロール    | メールアドレス             | パスワード      |
+| ------ | ------------------- | ---------- |
+| 管理者    | admin@example.com   | admin1234  |
+| 一般ユーザー | user@example.com    | user1234   |
+
+### サンプル商品データ
+
+起動時に 33 商品と 95 枚の商品画像レコードが自動投入されます（`src/main/resources/data.sql`）。
+画像ファイルは `src/main/resources/seed/products/` から `./uploads/products/` へ自動コピーされます。
+
+### ローカル DB のリセット手順
+
+H2 データベースを初期状態に戻す場合は、以下のファイルを削除してから再起動してください。
+
+```bash
+rm -f data/ecsitedb.mv.db data/ecsitedb.trace.db
+./mvnw spring-boot:run
+```
+
 ## アプリケーション構成
 
 ```text

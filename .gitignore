@@ -34,3 +34,11 @@ build/
 
 ### Windows Zone.Identifier ###
 *Zone.Identifier
+
+### H2 local database ###
+/data/*.db
+/data/*.mv.db
+/data/*.trace.db
+
+### Local upload files ###
+/uploads/
