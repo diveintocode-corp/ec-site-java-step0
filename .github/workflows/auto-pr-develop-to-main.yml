@@ -1,0 +1,44 @@
+name: Auto PR develop to main
+
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  pull-requests: write
+
+concurrency:
+  group: auto-pr-develop-to-main
+  cancel-in-progress: false
+
+jobs:
+  open-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create PR if not exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          existing=$(gh pr list --base main --head develop --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "PR #$existing already exists. Skipping."
+          else
+            gh pr create \
+              --base main \
+              --head develop \
+              --title "Release: develop -> main" \
+              --body "develop ブランチの内容を main にマージするための自動生成 PR です。
+
+マージ前に以下を確認してください。
+
+- [ ] CI が通過していること
+- [ ] アプリケーションがビルドできること
+- [ ] ローカルシードデータが正常に動作すること
+- [ ] アプリケーションが起動すること
+- [ ] 商品一覧・商品詳細ページが表示されること
+- [ ] 管理者ログインが動作すること（README の初期アカウント情報を参照）
+- [ ] 一般ユーザーログインが動作すること（README の初期アカウント情報を参照）
+- [ ] カートおよび注文フローが動作すること
+- [ ] デプロイタイミングが適切であること"
+          fi
