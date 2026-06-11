@@ -85,8 +85,15 @@
           },
           body: params,
         })
-          .then((r) => r.json())
+          .then((r) => {
+            if (r.redirected || r.url.includes("/accounts/login")) {
+              window.location.href = "/accounts/login";
+              return null;
+            }
+            return r.json();
+          })
           .then((data) => {
+            if (!data) return;
             const msg = document.getElementById("cartMessage");
             msg.className = "alert " + (data.success ? "alert-success" : "alert-danger");
             msg.textContent = data.message;
