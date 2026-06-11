@@ -20,11 +20,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          existing=$(gh pr list --base main --head develop --state open --json number --jq '.[0].number // empty')
+          existing=$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --head develop --state open --json number --jq '.[0].number // empty')
           if [ -n "$existing" ]; then
             echo "PR #$existing already exists. Skipping."
           else
             gh pr create \
+              --repo "$GITHUB_REPOSITORY" \
               --base main \
               --head develop \
               --title "Release: develop -> main" \
