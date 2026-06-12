@@ -43,12 +43,43 @@ jobs:
           target: /home/${{ secrets.AWS_EC2_USER }}/app/
           strip_components: 1
 
-      - name: Restart application
+      - name: Restart and verify application
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
+          command_timeout: 10m
           script: |
             sudo systemctl stop ec-site || true
+            START_TIME=$(date "+%Y-%m-%d %H:%M:%S")
             sudo systemctl start ec-site
+            echo "Waiting for application to start..."
+            for i in $(seq 1 36); do
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://localhost:8080/products 2>/dev/null || echo "000")
+              if [ "$STATUS" = "200" ] || [ "$STATUS" = "302" ]; then
+                echo "Tomcat up (HTTP $STATUS) — waiting for startup tasks to complete..."
+                for j in $(seq 1 36); do
+                  if sudo journalctl -u ec-site --no-pager --since "$START_TIME" | grep -q "Startup tasks completed successfully"; then
+                    echo "Application ready"
+                    exit 0
+                  fi
+                  STATE=$(systemctl is-active ec-site)
+                  if [ "$STATE" != "active" ]; then
+                    echo "Service entered state: $STATE — startup failed"
+                    sudo journalctl -u ec-site --no-pager --since "$START_TIME"
+                    exit 1
+                  fi
+                  echo "Waiting for startup tasks... attempt $j/36"
+                  sleep 10
+                done
+                echo "Startup tasks did not complete within 6 minutes"
+                sudo journalctl -u ec-site --no-pager --since "$START_TIME"
+                exit 1
+              fi
+              echo "Attempt $i/36 — HTTP $STATUS, retrying in 10s..."
+              sleep 10
+            done
+            echo "Application did not respond within 6 minutes"
+            sudo journalctl -u ec-site --no-pager --since "$START_TIME"
+            exit 1
