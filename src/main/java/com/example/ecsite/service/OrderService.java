@@ -15,7 +15,7 @@ import com.example.ecsite.entity.Order;
 import com.example.ecsite.entity.OrderItem;
 import com.example.ecsite.entity.Product;
 import com.example.ecsite.entity.ProductImage;
-import com.example.ecsite.entity.Profile;
+import com.example.ecsite.viewmodel.ShippingSnapshot;
 import com.example.ecsite.repository.CartItemRepository;
 import com.example.ecsite.repository.CartRepository;
 import com.example.ecsite.repository.OrderItemRepository;
@@ -57,7 +57,7 @@ public class OrderService {
     /**
      * 注文確認画面用のデータを取得する。
      */
-    public OrderConfirmViewModel getOrderConfirmViewModel(Long userId, Profile profile) {
+    public OrderConfirmViewModel getOrderConfirmViewModel(Long userId, ShippingSnapshot profile) {
         Cart cart = cartRepository.findByUserId(userId);
         List<CartItem> list = (cart != null)
                 ? cartItemRepository.findByCartId(cart.getCartId())
@@ -91,7 +91,7 @@ public class OrderService {
         String address = buildFullAddress(profile.getPrefecture(), profile.getAddress1(), profile.getAddress2());
 
         OrderConfirmViewModel vm = new OrderConfirmViewModel();
-        vm.setProfile(profile);
+        vm.setSelectedAddress(profile);
         vm.setAddress(address);
         vm.setOrderItems(data);
         vm.setSubtotal(subtotal);
@@ -105,7 +105,7 @@ public class OrderService {
      * 注文を確定する。カートを空にして注文完了用データを返す。
      */
     @Transactional
-    public OrderCompleteViewModel completeOrder(Long userId, Profile profile) {
+    public OrderCompleteViewModel completeOrder(Long userId, ShippingSnapshot profile) {
         Cart cart = cartRepository.findByUserId(userId);
         List<CartItem> list = (cart != null)
                 ? cartItemRepository.findByCartId(cart.getCartId())

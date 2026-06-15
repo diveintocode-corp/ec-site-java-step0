@@ -90,3 +90,17 @@ CREATE TABLE IF NOT EXISTS profiles (
   updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS shipping_addresses (
+  shipping_address_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id             BIGINT NOT NULL,
+  name                VARCHAR(64)  NOT NULL,
+  postal_code         VARCHAR(7)   NOT NULL,
+  prefecture          VARCHAR(16)  NOT NULL,
+  address_1           VARCHAR(128) NOT NULL,
+  address_2           VARCHAR(128),
+  telno               VARCHAR(11)  NOT NULL,
+  created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
