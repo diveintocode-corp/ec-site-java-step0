@@ -15,12 +15,12 @@ public interface ProductMapper {
 
         @Select("SELECT product_id, name, description, price, " +
                         "deleted,created_at, updated_at " +
-                        "FROM products WHERE deleted = FALSE ORDER BY created_at DESC")
+                        "FROM products WHERE deleted = FALSE ORDER BY created_at DESC, product_id DESC")
         List<Product> findAllActive();
 
         @Select("SELECT product_id, name, description, price, " +
                         "deleted,created_at, updated_at " +
-                        "FROM products ORDER BY created_at DESC")
+                        "FROM products ORDER BY created_at DESC, product_id DESC")
         List<Product> findAll();
 
         @Select("SELECT product_id, name, description, price, " +
