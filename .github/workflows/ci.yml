@@ -30,4 +30,4 @@ jobs:
         with:
           name: ec-site-jar
           path: target/*.jar
-          retention-days: 7
+          retention-days: 1
